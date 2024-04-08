@@ -22,6 +22,6 @@ public class Init_Conn {
         Random rand=new Random();
         int randomNum = rand.nextInt(0,3);
         System.out.println("ID Serveur: "+randomNum);
-        return getUri(randomNum);
+        return getNodename(randomNum);
     }
 }
