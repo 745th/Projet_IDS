@@ -106,10 +106,7 @@ public class Init_Conn {
             id=MaxPlayer++;
 
             //try to find legal coord (not in conflict with another player (first try))
-            NodechannelPublish.basicPublish("Initial_NS",getRandomNode()+"CL",null,getRandomLoc(id).getBytes());
-
-            //send his real ID
-            PlayerchannelPublish.basicPublish("Initial_PS",Long.toString(tmpID),null,("ID "+Integer.toString(id)).getBytes());
+            NodechannelPublish.basicPublish("Initial_NS",getRandomNode()+"CL",null,(getRandomLoc(id)+" "+tmpID).getBytes());
         }catch (IOException e)
         {
             System.out.println(e);
@@ -123,13 +120,14 @@ public class Init_Conn {
         {
             System.out.println("Failed, finding new coord");
             //try another coord (because the last one is in conflict with a player)
-            NodechannelPublish.basicPublish("Initial_NS",output[0]+"CL",null,getRandomLoc(Integer.parseInt(output[1])).getBytes());
+            NodechannelPublish.basicPublish("Initial_NS",output[0]+"CL",null,(getRandomLoc(Integer.parseInt(output[1]))+" "+output[3]).getBytes());
         }
         else
         {
             System.out.println("Success, player has coord");
             //send to the new player with which node he's connect
-            PlayerchannelPublish.basicPublish("Initial_PS",output[2],null,("NODE "+output[0]).getBytes());
+            System.out.println( message+"|"+output[2]);
+            PlayerchannelPublish.basicPublish("Initial_PS",output[3],null,("NODE "+output[0]+" "+output[2]).getBytes());
         }
     }
 

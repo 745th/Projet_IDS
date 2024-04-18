@@ -65,21 +65,11 @@ public class Player {
                     System.out.println("CT :" + consumerTag);
                     //double queuebind
                     String[] output = message2.split(" ");
-                    if(output[0].compareTo("NODE")==0)
-                    {
-                        ConnectToANode(output[1]);
-                        System.out.println("First node :" + output[1]);
-                        channelListen.queueUnbind(OldID, "Initial_PS", OldID);
-                        channelListen.queuePurge(ID);
-                        channelListen.queueUnbind(ID, "Initial_PS", ID);
-                        channelListen.queueDelete(OldID);
-                    }
-                    else
-                    {
-                        ID=output[1];
-                        System.out.println("new ID :" + output[1]);
-                        channelListen.queueBind(OldID, "Initial_PS", ID);
-                    }
+                    ID=output[2];
+                    ConnectToANode(output[1]);
+                    System.out.println("First node :" + output[1]);
+                    channelListen.queueUnbind(OldID, "Initial_PS", OldID);
+                    channelListen.queueDelete(OldID);
                 } catch (TimeoutException e) {
                     System.out.println(e);
                 }
@@ -99,6 +89,7 @@ public class Player {
         if(Nodename.compareTo("")!=0)
         {
             //switching to a new node
+            channelPublish.basicPublish("", Nodename+"L", null, (ID+" DISCONNECT").getBytes());
             channelListen.queueUnbind(ID, Nodename+"S", "");
         }
         else
@@ -135,18 +126,22 @@ public class Player {
     }
 
     public void Work(String consumer,long deliveryTag, String message) throws IOException, TimeoutException {
+        //receive movements of other players
         String[] output=message.split(" ");
         int ID = Integer.parseInt(output[0]);
         Point loc = new Point(Integer.parseInt(output[1]),Integer.parseInt(output[2]));
-        System.out.println(output);
         System.out.println(ID+" Loc: "+loc.toString());
-        if(Loc.containsKey(loc))
-        {
-            Loc.replace(ID, loc);
+        if(loc.x!=-1) {
+
+            if (Loc.containsKey(loc)) {
+                Loc.replace(ID, loc);
+            } else {
+                Loc.put(ID, loc);
+            }
         }
         else
         {
-            Loc.put(ID, loc);
+            Loc.remove(ID);
         }
 
 
