@@ -17,7 +17,6 @@ public class Node {
     private Channel channelConnexionL;
     private Channel channelConnexionS;
     private Channel channelPublish;
-    private Channel channelNodeComL;
     private Channel channelNodeComS;
     private DefaultConsumer Handler;
     private DefaultConsumer Handler2;
@@ -52,31 +51,30 @@ public class Node {
         channelPublish = connection.createChannel();
         channelConnexionL = connection.createChannel();
         channelConnexionS = connection.createChannel();
-        channelNodeComL = connection.createChannel();
         channelNodeComS = connection.createChannel();
 
 
         channelListen.queueDeclare(Nodename+"L", false, false, false, null);
 
         channelConnexionL.queueDeclare(Nodename+"CL", false, false, false, null);
-        channelConnexionS.queueDeclare("Initial_NL", false, false, false, null);
+        channelConnexionS.queueDeclare("", false, false, false, null);
         channelNodeComS.queueDeclare(Nodename+"NS", false, false, false, null);
 
         //channelConnexionL.exchangeDeclare("Initial_PS", "direct");
         channelConnexionL.queueBind(Nodename+"CL", "Initial_NS", Nodename+"CL");
-        channelConnexionL.exchangeDeclare("NodeCom", "direct");
-        for(int i=1;i<=4;i++)
+        for(int i=0;i<=3;i++)
         {
             //we use the same channel for NodeCommunication and InitComm
-            channelConnexionL.exchangeDeclare("Node" + Integer.toString(i) + "NS", "direct");
-            if(Character.getNumericValue(Nodename.charAt(Nodename.length()-1))!=i) {
-                channelConnexionL.queueBind(Nodename + "CL", "Node" + Integer.toString(i) + "NS", Nodename);
+            char l = 'A';
+            l+=i;
+            channelConnexionL.exchangeDeclare("Node" + String.valueOf(l) + "NS", "direct");
+            if(Nodename.charAt(Nodename.length()-1)!='A'+i) {
+                channelConnexionL.queueBind(Nodename + "CL", "Node" + String.valueOf(l) + "NS", Nodename);
             }
         }
-
         channelPublish.queueDeclare(Nodename+"S", false, false, false, null);
 
-        channelPublish.exchangeDeclare(Nodename+"S", "fanout");
+        channelPublish.exchangeDeclare(Nodename+"S", "direct");
         channelListen.basicQos(1);
 
         try{
@@ -84,6 +82,7 @@ public class Node {
             channelConnexionS.queuePurge("Initial_NL");
             channelPublish.queuePurge(Nodename+"S");
             channelListen.queuePurge(Nodename+"L");
+            channelNodeComS.queuePurge(Nodename+"NS");
 
         }catch(IOException e)
         {
@@ -108,6 +107,9 @@ public class Node {
 
                         case "DISCONNECT":
                             DisconnectPlayer(message2);
+                            break;
+                        case "SUCCESS":
+                            SwitchPlayer(message2);
                             break;
                         default:
                             MovePlayer(message2);
@@ -139,14 +141,21 @@ public class Node {
         channelConnexionL.basicConsume(Nodename+"CL", true, Handler2);
     }
 
+    public void SwitchPlayer(String message) throws IOException
+    {
+        String[] output=message.split(" ");
+        channelPublish.basicPublish(Nodename + "S", output[2],null,("0 0 0 SWITCH "+output[0]).getBytes());
+    }
+
     public void ConnectPlayer(String message) throws IOException, TimeoutException
     {
         String[] output=message.split(" ");
         if(output[2].compareTo("Player") == 0) {
             //send coord of all players to output[0]
+            System.out.println("Send Coord of Players "+output[0]);
             String[] player_list = Players.keySet().toArray(new String[Players.size()]);
                 for (String i : player_list) {
-                    channelPublish.basicPublish(Nodename + "S", output[0], null, (output[0] + " " + Integer.toString(Players.get(i).x) + " " + Integer.toString(Players.get(i).y)).getBytes());
+                    channelPublish.basicPublish(Nodename + "S", output[0], null, (i + " " + Integer.toString(Players.get(i).x) + " " + Integer.toString(Players.get(i).y)+" UPDATE").getBytes());
                 }
 
         }
@@ -154,16 +163,16 @@ public class Node {
             if (MovePlayer(message)) {
                 //InitConn succed to get a valid coord
                 System.out.println("New Player in coming");
-                if (output.length == 5)
-                    channelConnexionS.basicPublish("", "Initial_NL", null, (Nodename + " SUCCESS " + output[0] + " " + output[4]).getBytes());
+                if (output.length == 6)
+                    channelConnexionS.basicPublish("", output[5], null, (Nodename + " SUCCESS " + output[0] + " " + output[4]).getBytes());
                 //else it's a player trying to move
             } else {
 
                 System.out.println("Coord is occupy");
-                if (output.length == 5) {
+                if (output.length == 6) {
                     //InitConn send coord being occupied
                     //alert InitConn
-                    channelConnexionS.basicPublish("", "Initial_NL", null, (Nodename + " " + output[0] + " " + output[4]).getBytes());
+                    channelConnexionS.basicPublish("", output[5], null, (Nodename + " " + output[0] + " " + output[4]).getBytes());
 
                 }
                 //else it's a player trying to move
@@ -181,11 +190,13 @@ public class Node {
         int x=Players.get(output[0]).x;
         int y=Players.get(output[0]).y;
         Players.remove(output[0]);
-        channelPublish.basicPublish(Nodename+"S", "",null, (output[0]+" -1 -1").getBytes());
+        Grid[x][y]=-1;
+        for(String p : Players.keySet())
+            channelPublish.basicPublish(Nodename+"S", p,null, (output[0]+" -1 -1 UPDATE").getBytes());
     }
 
     public boolean MovePlayer(String message) throws IOException, TimeoutException {
-        System.out.println("Move a player");
+        System.out.println("Move a player : "+message);
         String[] output=message.split(" ");
         int y,x;
         if(Players.containsKey(output[0])) {
@@ -194,7 +205,6 @@ public class Node {
         }
         else
         {
-            Players.put(output[0],new Point(-1,-1));
             x=Integer.parseInt(output[2]);
             y=Integer.parseInt(output[3]);
         }
@@ -217,19 +227,26 @@ public class Node {
                 y++;
                 break;
         }
-        System.out.println("try: "+Integer.toString(Grid[x][y])+" "+Integer.toString(x)+" "+Integer.toString(y));
-        if(SwitchNode(output[0],x,y)) {
-            if (Grid[x][y] == -1) {
-                Grid[x][y] = Integer.parseInt(output[0]);
-                if (Players.get(output[0]).x != -1)
-                    Grid[Players.get(output[0]).x][Players.get(output[0]).y] = -1;
-                Players.replace(output[0], new Point(x, y));
-                channelPublish.basicPublish(Nodename + "S", "", null, (output[0] + " " + Integer.toString(x) + " " + Integer.toString(y)).getBytes());
-                return true;
-            } else {
-                //can't move here
-                Players.remove(output[0]);
-                return false;
+
+        if(SwitchNode(output[0],x,y) ) {
+            if(x>=0 && x<Size && y>=0 && y<Size) {
+                System.out.println("try: " + Integer.toString(Grid[x][y]) + " " + Integer.toString(x) + " " + Integer.toString(y));
+                if (Grid[x][y] == -1) {
+                    Grid[x][y] = Integer.parseInt(output[0]);
+                    if (!Players.containsKey(output[0])) {
+                        Players.put(output[0], new Point(-1, -1));
+                    } else {
+                        if (Players.get(output[0]).x != -1)
+                            Grid[Players.get(output[0]).x][Players.get(output[0]).y] = -1;
+                    }
+                    Players.replace(output[0], new Point(x, y));
+                    for (String p : Players.keySet())
+                        channelPublish.basicPublish(Nodename + "S", p, null, (output[0] + " " + Integer.toString(x) + " " + Integer.toString(y) + " UPDATE").getBytes());
+                    return true;
+                } else {
+                    //can't move here
+                    return false;
+                }
             }
         }
         return true;
@@ -256,11 +273,13 @@ public class Node {
                 {
                     newNode="NodeB";
                     newCoord.x=0;
+                    System.out.println("switch "+newNode);
                 }
                 else if(newCoord.y>=Size)
                 {
                     newCoord.y=0;
                     newNode="NodeC";
+                    System.out.println("switch "+newNode);
                 }
                 break;
             case "NodeB":
@@ -271,11 +290,13 @@ public class Node {
                 {
                     newCoord.x=Size-1;
                     newNode="NodeA";
+                    System.out.println("switch "+newNode);
                 }
                 else if(newCoord.y>=Size)
                 {
                     newCoord.y=0;
                     newNode="NodeD";
+                    System.out.println("switch "+newNode);
                 }
                 break;
             case "NodeC":
@@ -285,12 +306,16 @@ public class Node {
                 }else if(newCoord.x>=Size)
                 {
                     newCoord.x=0;
+                    System.out.println("switch D");
                     newNode="NodeD";
+                    System.out.println("switch "+newNode);
                 }
                 else if(newCoord.y<0)
                 {
+                    System.out.println("switch A");
                     newCoord.y=Size-1;
                     newNode="NodeA";
+                    System.out.println("switch "+newNode);
                 }
                 break;
             case "NodeD":
@@ -301,16 +326,18 @@ public class Node {
                 {
                     newCoord.x=Size-1;
                     newNode="NodeC";
+                    System.out.println("switch "+newNode);
                 }
                 else if(newCoord.y<0)
                 {
                     newCoord.y=Size-1;
                     newNode="NodeB";
+                    System.out.println("switch "+newNode);
                 }
                 break;
         }
         if(newNode.compareTo("")!=0) {
-            channelConnexionL.basicPublish(Nodename + "NS", newNode, null, (PlayerId + " STILL " + Integer.toString(newCoord.x) + " " + Integer.toString(newCoord.y)).getBytes());
+            channelNodeComS.basicPublish(Nodename+"NS", newNode, null, (PlayerId + " STILL " + Integer.toString(newCoord.x) + " " + Integer.toString(newCoord.y)+" _ "+Nodename+"L").getBytes());
             return false;
         }
         return true;

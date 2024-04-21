@@ -106,7 +106,7 @@ public class Init_Conn {
             id=MaxPlayer++;
 
             //try to find legal coord (not in conflict with another player (first try))
-            NodechannelPublish.basicPublish("Initial_NS",getRandomNode()+"CL",null,(getRandomLoc(id)+" "+tmpID).getBytes());
+            NodechannelPublish.basicPublish("Initial_NS",getRandomNode()+"CL",null,(getRandomLoc(id)+" "+tmpID+" Initial_NL").getBytes());
         }catch (IOException e)
         {
             System.out.println(e);
@@ -120,7 +120,7 @@ public class Init_Conn {
         {
             System.out.println("Failed, finding new coord");
             //try another coord (because the last one is in conflict with a player)
-            NodechannelPublish.basicPublish("Initial_NS",output[0]+"CL",null,(getRandomLoc(Integer.parseInt(output[1]))+" "+output[3]).getBytes());
+            NodechannelPublish.basicPublish("Initial_NS",output[0]+"CL",null,(getRandomLoc(Integer.parseInt(output[1]))+" "+output[3]+" Initial_NL").getBytes());
         }
         else
         {
@@ -148,6 +148,6 @@ public class Init_Conn {
         Random rand=new Random();
         int randomNum = rand.nextInt(0,3);
         System.out.println("rand ID Serveur: "+randomNum);
-        return getNodename(2);
+        return getNodename(randomNum);
     }
 }

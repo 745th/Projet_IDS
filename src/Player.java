@@ -94,11 +94,13 @@ public class Player {
     public void ConnectToANode(String t_Nodename) throws IOException, TimeoutException
     {
         //changing sector
+        System.out.println("Switching node");
         if(Nodename.compareTo("")!=0)
         {
             //switching to a new node
             channelPublish.basicPublish("", Nodename+"L", null, (ID+" DISCONNECT").getBytes());
             channelListen.queueUnbind(ID, Nodename+"S", "");
+            Loc.clear();
         }
         else
         {
@@ -129,7 +131,7 @@ public class Player {
 
         //channelListen.exchangeDeclare(Nodename+"S", "fanout");
         //channelPublish.queueDeclare(Nodename+"L", false, false, false, null);
-        channelListen.queueBind(ID, Nodename+"S", "");
+        channelListen.queueBind(ID, Nodename+"S", ID);
 
         channelPublish.basicPublish("", Nodename+"L", null, (ID+" CONNECT Player").getBytes());
     }
@@ -140,21 +142,28 @@ public class Player {
         int ID_in = Integer.parseInt(output[0]);
         Point loc = new Point(Integer.parseInt(output[1]),Integer.parseInt(output[2]));
         System.out.println(ID_in+" Loc: "+loc.toString());
-        if(output.length==4 && output[3].compareTo("CONNECT")==0)
+
+        switch(output[3])
         {
-            if (!Loc.containsKey(loc)) {
-                Loc.put(ID_in, loc);
-            }
-        }else {
-            if (loc.x != -1) {
-                if (Loc.containsKey(loc)) {
-                    Loc.replace(ID_in, loc);
-                } else {
+            case "CONNECT":
+                if (!Loc.containsKey(loc)) {
                     Loc.put(ID_in, loc);
                 }
-            } else {
-                Loc.remove(ID_in);
-            }
+                break;
+            case "UPDATE":
+                if (loc.x != -1) {
+                    if (Loc.containsKey(loc)) {
+                        Loc.replace(ID_in, loc);
+                    } else {
+                        Loc.put(ID_in, loc);
+                    }
+                } else {
+                    Loc.remove(ID_in);
+                }
+                break;
+            case "SWITCH":
+                ConnectToANode(output[4]);
+                break;
         }
 
         //APPEL DE RAPH
