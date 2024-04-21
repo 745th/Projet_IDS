@@ -25,6 +25,8 @@ public class Player {
     String Nodename;
     Connection connection;
 
+    Point MyLoc;
+
     public static void main(String[] args) throws IOException,TimeoutException{
         Player player = new Player();
         player.ConnectToNetwork();
@@ -160,9 +162,18 @@ public class Player {
                 } else {
                     Loc.remove(ID_in);
                 }
+                if(ID_in == Integer.parseInt(ID))
+                    MyLoc=loc;
+                if(isCoucou(loc))
+                    channelPublish.basicPublish("", Nodename + "L", null, (ID + " COUCOU "+Integer.toString(ID_in)+" 0").getBytes());
                 break;
             case "SWITCH":
                 ConnectToANode(output[4]);
+                break;
+            case "COUCOU":
+                if(Integer.parseInt(output[1])==0)
+                    channelPublish.basicPublish("", Nodename + "L", null, (ID + " COUCOU "+output[4]+" 1").getBytes());
+                System.out.println("Coucou de "+output[4]+" !");
                 break;
         }
 
@@ -181,7 +192,6 @@ public class Player {
             channelPublish.basicPublish("", Nodename + "L", null, (ID + " DISCONNECT").getBytes());
             channelListen.queuePurge(ID);
             channelListen.queueDelete(ID);
-
         }catch(IOException e)
         {
             System.out.println(e);
@@ -195,5 +205,15 @@ public class Player {
         }catch (Exception e){
             e.printStackTrace();
         }
+    }
+
+    public boolean isCoucou(Point loc)
+    {
+        if((MyLoc.x - loc.x ==1 || MyLoc.x - loc.x ==-1) && MyLoc.y - loc.y==0)
+            return true;
+        if((MyLoc.y - loc.y ==1 || MyLoc.y - loc.y ==-1) && MyLoc.x - loc.x==0)
+            return true;
+
+        return false;
     }
 }

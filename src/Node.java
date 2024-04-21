@@ -111,6 +111,12 @@ public class Node {
                         case "SUCCESS":
                             SwitchPlayer(message2);
                             break;
+                        case "FAILED":
+                            System.out.println("Switch Failed");
+                            break;
+                        case "COUCOU":
+                            Coucou(message2);
+                            break;
                         default:
                             MovePlayer(message2);
                             break;
@@ -141,6 +147,11 @@ public class Node {
         channelConnexionL.basicConsume(Nodename+"CL", true, Handler2);
     }
 
+    public void Coucou(String message) throws IOException
+    {
+        String[] output=message.split(" ");
+        channelPublish.basicPublish(Nodename + "S", output[2],null,("0 "+output[3]+" 0 COUCOU "+output[0]).getBytes());
+    }
     public void SwitchPlayer(String message) throws IOException
     {
         String[] output=message.split(" ");
@@ -172,7 +183,7 @@ public class Node {
                 if (output.length == 6) {
                     //InitConn send coord being occupied
                     //alert InitConn
-                    channelConnexionS.basicPublish("", output[5], null, (Nodename + " " + output[0] + " " + output[4]).getBytes());
+                    channelConnexionS.basicPublish("", output[5], null, (Nodename + " FAILED " + output[0] + " " + output[4]).getBytes());
 
                 }
                 //else it's a player trying to move

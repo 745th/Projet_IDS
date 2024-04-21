@@ -120,7 +120,7 @@ public class Init_Conn {
         {
             System.out.println("Failed, finding new coord");
             //try another coord (because the last one is in conflict with a player)
-            NodechannelPublish.basicPublish("Initial_NS",output[0]+"CL",null,(getRandomLoc(Integer.parseInt(output[1]))+" "+output[3]+" Initial_NL").getBytes());
+            NodechannelPublish.basicPublish("Initial_NS",output[0]+"CL",null,(getRandomLoc(Integer.parseInt(output[2]))+" "+output[4]+" Initial_NL").getBytes());
         }
         else
         {
