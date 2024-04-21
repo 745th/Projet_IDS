@@ -32,6 +32,7 @@ public class FenetreJeu extends JFrame{
         frame.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                //disconnect player
                 play.Disconnect();
                 System.exit(0);
             }

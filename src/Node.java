@@ -27,6 +27,7 @@ public class Node {
         Nodename=name;
         Players= new Hashtable<>();
         Grid = new int[Size][Size];
+        //a node is always a square Size x Size
         for(int i =0;i<Size;i++) {
             for (int j = 0; j < Size; j++) {
                 Grid[i][j] = -1;
@@ -47,10 +48,20 @@ public class Node {
 
         Connection connection = factory.newConnection();
         System.out.println("Connected !");
+
+        //Listen for a action to do in this node
         channelListen = connection.createChannel();
+
+        //publish if a change occure in this node to players
         channelPublish = connection.createChannel();
+
+        //listen for new player coming from another node or from Init_Conn
         channelConnexionL = connection.createChannel();
+
+        //Answer back if the player can connect or not
         channelConnexionS = connection.createChannel();
+
+        //ask to a node to exchange a player with another node
         channelNodeComS = connection.createChannel();
 
 
@@ -60,13 +71,15 @@ public class Node {
         channelConnexionS.queueDeclare("", false, false, false, null);
         channelNodeComS.queueDeclare(Nodename+"NS", false, false, false, null);
 
-        //channelConnexionL.exchangeDeclare("Initial_PS", "direct");
+        //bind with Init_Conn
         channelConnexionL.queueBind(Nodename+"CL", "Initial_NS", Nodename+"CL");
         for(int i=0;i<=3;i++)
         {
-            //we use the same channel for NodeCommunication and InitComm
+            //we use the same channel for NodeCommunication and InitComm for listening
             char l = 'A';
             l+=i;
+
+            //bind with all node
             channelConnexionL.exchangeDeclare("Node" + String.valueOf(l) + "NS", "direct");
             if(Nodename.charAt(Nodename.length()-1)!='A'+i) {
                 channelConnexionL.queueBind(Nodename + "CL", "Node" + String.valueOf(l) + "NS", Nodename);
@@ -78,6 +91,7 @@ public class Node {
         channelListen.basicQos(1);
 
         try{
+            //clean old message
             channelConnexionL.queuePurge(Nodename+"CL");
             channelConnexionS.queuePurge("Initial_NL");
             channelPublish.queuePurge(Nodename+"S");
@@ -96,28 +110,36 @@ public class Node {
                                        byte[] body) throws IOException {
                 String message2 = new String(body, "UTF-8");
                 System.out.println("New message !");
+
+                //Listen to do something in this node ...
                 try {
                     System.out.println("CT :" + consumerTag);
 
                     switch (message2.split(" ")[1])
                     {
                         case "CONNECT":
+                            //A new player is connected, it's a message send only by player to get all players coordinate
                             ConnectPlayer(message2);
                             break;
 
                         case "DISCONNECT":
+                            //A player want to disconect from this node, it's call only by players if he goes to another node, or if the JFRAME is closing
                             DisconnectPlayer(message2);
                             break;
                         case "SUCCESS":
+                            //After sending a message to a node to send a player, the node respond back positively so this node alert the player
                             SwitchPlayer(message2);
                             break;
                         case "FAILED":
+                            //does nothing, it's occur only if a node respond back negatively after this node asking if a player can go to the other node
                             System.out.println("Switch Failed");
                             break;
                         case "COUCOU":
+                            //a player has seen another one ! This node transfer this message to the target player
                             Coucou(message2);
                             break;
                         default:
+                            //try to move a player
                             MovePlayer(message2);
                             break;
                     }
@@ -150,11 +172,14 @@ public class Node {
     public void Coucou(String message) throws IOException
     {
         String[] output=message.split(" ");
+        //send a coucour to the target player
+        //the other one will respond back only if this message is the first one (like ping pong)
         channelPublish.basicPublish(Nodename + "S", output[2],null,("0 "+output[3]+" 0 COUCOU "+output[0]).getBytes());
     }
     public void SwitchPlayer(String message) throws IOException
     {
         String[] output=message.split(" ");
+        //alert the player, that he can change node
         channelPublish.basicPublish(Nodename + "S", output[2],null,("0 0 0 SWITCH "+output[0]).getBytes());
     }
 
@@ -162,7 +187,7 @@ public class Node {
     {
         String[] output=message.split(" ");
         if(output[2].compareTo("Player") == 0) {
-            //send coord of all players to output[0]
+            //send coord of players location to output[0] (a player asking for coords)
             System.out.println("Send Coord of Players "+output[0]);
             String[] player_list = Players.keySet().toArray(new String[Players.size()]);
                 for (String i : player_list) {
@@ -172,7 +197,7 @@ public class Node {
         }
         else {
             if (MovePlayer(message)) {
-                //InitConn succed to get a valid coord
+                //InitConn or a node succeed to get a valid coord
                 System.out.println("New Player in coming");
                 if (output.length == 6)
                     channelConnexionS.basicPublish("", output[5], null, (Nodename + " SUCCESS " + output[0] + " " + output[4]).getBytes());
@@ -181,8 +206,8 @@ public class Node {
 
                 System.out.println("Coord is occupy");
                 if (output.length == 6) {
-                    //InitConn send coord being occupied
-                    //alert InitConn
+                    //InitConn or a node send coords being occupied
+                    //alert InitConn or the node in output[0]
                     channelConnexionS.basicPublish("", output[5], null, (Nodename + " FAILED " + output[0] + " " + output[4]).getBytes());
 
                 }
@@ -195,6 +220,7 @@ public class Node {
 
     private void DisconnectPlayer(String message) throws IOException, TimeoutException
     {
+        //remove from known player of this node
         System.out.println("Disconnect a player");
         String[] output=message.split(" ");
         System.out.println(message);
@@ -202,6 +228,7 @@ public class Node {
         int y=Players.get(output[0]).y;
         Players.remove(output[0]);
         Grid[x][y]=-1;
+        //alert everyone a player is no more with them :(
         for(String p : Players.keySet())
             channelPublish.basicPublish(Nodename+"S", p,null, (output[0]+" -1 -1 UPDATE").getBytes());
     }
@@ -211,11 +238,13 @@ public class Node {
         String[] output=message.split(" ");
         int y,x;
         if(Players.containsKey(output[0])) {
+            //get the coord is the node know this player
             y = Players.get(output[0]).y;
             x = Players.get(output[0]).x;
         }
         else
         {
+            //get the coord from message if the player is new from this node
             x=Integer.parseInt(output[2]);
             y=Integer.parseInt(output[3]);
         }
@@ -238,19 +267,26 @@ public class Node {
                 y++;
                 break;
         }
-
+        //check if the current coords are outside the node but in sector of another node
         if(SwitchNode(output[0],x,y) ) {
+            //check now if it's outside
             if(x>=0 && x<Size && y>=0 && y<Size) {
                 System.out.println("try: " + Integer.toString(Grid[x][y]) + " " + Integer.toString(x) + " " + Integer.toString(y));
+
+                //if the cell is free
                 if (Grid[x][y] == -1) {
                     Grid[x][y] = Integer.parseInt(output[0]);
                     if (!Players.containsKey(output[0])) {
+                        //add player if he doesn't exist here
                         Players.put(output[0], new Point(-1, -1));
                     } else {
+                        //if it's not the first time the player came, then his old coord will be free
                         if (Players.get(output[0]).x != -1)
                             Grid[Players.get(output[0]).x][Players.get(output[0]).y] = -1;
                     }
                     Players.replace(output[0], new Point(x, y));
+
+                    //alert everyone in this node of a player has moved
                     for (String p : Players.keySet())
                         channelPublish.basicPublish(Nodename + "S", p, null, (output[0] + " " + Integer.toString(x) + " " + Integer.toString(y) + " UPDATE").getBytes());
                     return true;
@@ -272,7 +308,7 @@ public class Node {
             -------------
             NodeC | NodeD
         */
-        String newNode=""; //it's impposible to not have a Node outside of this list
+        String newNode=""; //it's impossible to not have a Node outside of this list
         Point newCoord = new Point(x,y);
         switch(Nodename)
         {
@@ -348,6 +384,7 @@ public class Node {
                 break;
         }
         if(newNode.compareTo("")!=0) {
+            //alert the other node that a player want to join his vicinity
             channelNodeComS.basicPublish(Nodename+"NS", newNode, null, (PlayerId + " STILL " + Integer.toString(newCoord.x) + " " + Integer.toString(newCoord.y)+" _ "+Nodename+"L").getBytes());
             return false;
         }

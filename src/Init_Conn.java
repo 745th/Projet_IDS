@@ -31,23 +31,31 @@ public class Init_Conn {
         UriList = new String[4];
         NodeSize=t_NodeSize;
         MaxPlayer=1;
-        UriList[0]="NodeA";//"amqps://jldrpdok:8C9KJ8G4v3BKy_fA1xs10zw22AsAl_rr@rattlesnake.rmq.cloudamqp.com/jldrpdok";
-        UriList[1]="NodeB";//"amqps://yfnszspt:sn1e2lYmrjqekmkGYR2WHsySWULUPvnB@rattlesnake.rmq.cloudamqp.com/yfnszspt"; //Instance
-        UriList[2]="NodeC";//"amqps://vpagfpmc:wcQLsc6CD9DDUsDlz0WV9zuPRX6w8B_p@rattlesnake.rmq.cloudamqp.com/vpagfpmc";
-        UriList[3]="NodeD";//"amqps://sigxapzn:zfU4BEKDm_wcNFNjw3_BkX6R1j3WqxcX@rattlesnake.rmq.cloudamqp.com/sigxapzn";
+
+        UriList[0]="NodeA";
+        UriList[1]="NodeB";
+        UriList[2]="NodeC";
+        UriList[3]="NodeD";
 
         factory = new ConnectionFactory();
         factory.setHost("LocalHost");
         System.out.println("Connecting ...");
         Connection connection= factory.newConnection();
         System.out.println("Connected !");
+
+        //Listen a response of Node, if the coord send by Init_Conn is valid or not
         NodechannelListen = connection.createChannel();
+        //send coord to a specific node, to check if this coord is valid
         NodechannelPublish = connection.createChannel();
+
+        //listen if a new player want to connect (it's their first time here)
         PlayerchannelListen = connection.createChannel();
+
+        //announce to a specific player his node, his coord and his real ID
         PlayerchannelPublish = connection.createChannel();
 
 
-
+        //Creating all the channels
         NodechannelListen.queueDeclare("Initial_NL", false, false, false, null);
         NodechannelPublish.queueDeclare("Initial_NS", false, false, false, null);
         NodechannelPublish.exchangeDeclare("Initial_NS","direct");
@@ -57,6 +65,7 @@ public class Init_Conn {
         PlayerchannelPublish.exchangeDeclare("Initial_PS","direct");
 
         try{
+            //Clean old messages
             NodechannelListen.queuePurge("Initial_NL");
             NodechannelPublish.queuePurge("Initial_NS");
             PlayerchannelListen.queuePurge("Initial_PL");
@@ -103,6 +112,7 @@ public class Init_Conn {
         int id=-1;
         try
         {
+            //it's always incrementing
             id=MaxPlayer++;
 
             //try to find legal coord (not in conflict with another player (first try))
@@ -125,7 +135,7 @@ public class Init_Conn {
         else
         {
             System.out.println("Success, player has coord");
-            //send to the new player with which node he's connect
+            //send to the new player with which node he's connected
             System.out.println( message+"|"+output[2]);
             PlayerchannelPublish.basicPublish("Initial_PS",output[3],null,("NODE "+output[0]+" "+output[2]).getBytes());
         }
@@ -138,6 +148,7 @@ public class Init_Conn {
 
     public String getRandomLoc(int id)
     {
+        //randomize coordinates
         Random rand=new Random();
         int x = rand.nextInt(0,NodeSize);
         int y = rand.nextInt(0,NodeSize);
@@ -145,6 +156,7 @@ public class Init_Conn {
     }
     public String getRandomNode()
     {
+        //randomize node
         Random rand=new Random();
         int randomNum = rand.nextInt(0,3);
         System.out.println("rand ID Serveur: "+randomNum);
