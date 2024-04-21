@@ -127,7 +127,7 @@ public class Player {
         Nodename=t_Nodename;
         jeu.updateBackground();
 
-        channelListen.exchangeDeclare(Nodename+"S", "fanout");
+        //channelListen.exchangeDeclare(Nodename+"S", "fanout");
         //channelPublish.queueDeclare(Nodename+"L", false, false, false, null);
         channelListen.queueBind(ID, Nodename+"S", "");
 
@@ -163,6 +163,20 @@ public class Player {
         Loc.forEach((K,v)->plat.plateau[v.x][v.y] = K);
         jeu.plateauGraphique.repaint();
 
+
+    }
+
+    public void Disconnect()
+    {
+        try {
+            channelPublish.basicPublish("", Nodename + "L", null, (ID + " DISCONNECT").getBytes());
+            channelListen.queuePurge(ID);
+            channelListen.queueDelete(ID);
+
+        }catch(IOException e)
+        {
+            System.out.println(e);
+        }
     }
 
     public void Move(PlayerAction d)

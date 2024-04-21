@@ -1,6 +1,5 @@
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 
 public class FenetreJeu extends JFrame{
 
@@ -29,6 +28,14 @@ public class FenetreJeu extends JFrame{
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
+
+        frame.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                play.Disconnect();
+                System.exit(0);
+            }
+        });
     }
 
     public void updateBackground() {
