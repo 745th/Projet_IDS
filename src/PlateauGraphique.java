@@ -38,7 +38,11 @@ public class PlateauGraphique extends JComponent implements KeyListener {
                 if(cases[i][j] != 0){
                     drawable.setStroke(new BasicStroke(4));
                     drawable.drawRoundRect(i * tailleCases + tailleCases/13,j * tailleCases + tailleCases/13,tailleCases*9/11,tailleCases*9/11, tailleCases, tailleCases);
-                    drawable.setColor(Color.WHITE);
+                    if(cases[i][j] == plateau.joueur){
+                        drawable.setColor(Color.RED);
+                    }else{
+                        drawable.setColor(Color.WHITE);
+                    }
                     drawable.fillRoundRect(i * tailleCases + tailleCases/13,j * tailleCases + tailleCases/13,tailleCases*9/11,tailleCases*9/11, tailleCases, tailleCases);
                     drawable.setColor(Color.BLACK);
                     drawable.drawString(""+cases[i][j],  i * tailleCases + tailleCases*3/10,  j * tailleCases + tailleCases*6/10);
