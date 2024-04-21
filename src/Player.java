@@ -138,30 +138,28 @@ public class Player {
     public void Work(String consumer,long deliveryTag, String message) throws IOException, TimeoutException {
         //receive movements of other players
         String[] output=message.split(" ");
-        int ID = Integer.parseInt(output[0]);
+        int ID_in = Integer.parseInt(output[0]);
         Point loc = new Point(Integer.parseInt(output[1]),Integer.parseInt(output[2]));
-        System.out.println(ID+" Loc: "+loc.toString());
+        System.out.println(ID_in+" Loc: "+loc.toString());
         if(output.length==4 && output[3].compareTo("CONNECT")==0)
         {
             if (!Loc.containsKey(loc)) {
-                Loc.put(ID, loc);
+                Loc.put(ID_in, loc);
             }
-        }
-        else {
+        }else {
             if (loc.x != -1) {
-
                 if (Loc.containsKey(loc)) {
-                    Loc.replace(ID, loc);
+                    Loc.replace(ID_in, loc);
                 } else {
-                    Loc.put(ID, loc);
+                    Loc.put(ID_in, loc);
                 }
             } else {
-                System.out.println("Player Disconnect");
-                Loc.remove(ID);
+                Loc.remove(ID_in);
             }
         }
 
         //APPEL DE RAPH
+        plat.joueur = Integer.parseInt(ID);
         Loc.forEach((K,v)->plat.plateau[v.x][v.y] = K);
         jeu.plateauGraphique.repaint();
 

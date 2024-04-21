@@ -6,7 +6,7 @@ public class Plateau {
     int[][] plateau; // int pour id de joueur ou 0 
     int col;
     int row;
-    int joueur[][];
+    int joueur;
 
     public Plateau(int c, int r) {
         col = c;

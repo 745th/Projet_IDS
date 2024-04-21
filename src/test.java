@@ -6,7 +6,7 @@ public class test extends JFrame{
         try {
             FenetreJeu jeu = new FenetreJeu(p,null);
             // FenetreGraphique mainFen = new FenetreGraphique(p);
-            jeu.setVisible(true);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
