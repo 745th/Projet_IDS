@@ -132,7 +132,7 @@ public class Player {
         //channelPublish.queueDeclare(Nodename+"L", false, false, false, null);
         channelListen.queueBind(ID, Nodename+"S", "");
 
-        channelPublish.basicPublish("", Nodename+"L", null, (ID+" CONNECT").getBytes());
+        channelPublish.basicPublish("", Nodename+"L", null, (ID+" CONNECT Player").getBytes());
     }
 
     public void Work(String consumer,long deliveryTag, String message) throws IOException, TimeoutException {
@@ -141,17 +141,23 @@ public class Player {
         int ID = Integer.parseInt(output[0]);
         Point loc = new Point(Integer.parseInt(output[1]),Integer.parseInt(output[2]));
         System.out.println(ID+" Loc: "+loc.toString());
-        if(loc.x!=-1) {
-
-            if (Loc.containsKey(loc)) {
-                Loc.replace(ID, loc);
-            } else {
+        if(output.length==4 && output[3].compareTo("CONNECT")==0)
+        {
+            if (!Loc.containsKey(loc)) {
                 Loc.put(ID, loc);
             }
         }
-        else
-        {
-            Loc.remove(ID);
+        else {
+            if (loc.x != -1) {
+
+                if (Loc.containsKey(loc)) {
+                    Loc.replace(ID, loc);
+                } else {
+                    Loc.put(ID, loc);
+                }
+            } else {
+                Loc.remove(ID);
+            }
         }
 
         //APPEL DE RAPH

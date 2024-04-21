@@ -145,14 +145,32 @@ public class Node {
         if(MovePlayer(message))
         {
             System.out.println("New Player in coming");
-            if(output.length==5)
+            if(output.length==5 && output[4].compareTo("Player")==0)
+            {
+
+            }
+            else
+            {
                 channelConnexionS.basicPublish("", "Initial_NL",null,(Nodename+" SUCCESS "+output[0]+" "+output[4]).getBytes());
+            }
+
         }
         else
         {
             System.out.println("Coord is occupy");
-            if(output.length==5)
+            if(output.length==5 && output[4].compareTo("Player")==0)
+            {
+                String [] player_list=Players.keySet().toArray(new String[Players.size()]);
+                for (String i : player_list)
+                {
+                    channelPublish.basicPublish(Nodename + "S", output[0], null, (output[0] + " " + Integer.toString(Players.get(i).x) + " " + Integer.toString(Players.get(i).y)).getBytes());
+                }
+            }
+            else
+            {
                 channelConnexionS.basicPublish("", "Initial_NL",null, (Nodename+" "+output[0]+" "+output[4]).getBytes());
+            }
+
         }
 
     }
