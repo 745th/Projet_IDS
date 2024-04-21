@@ -23,7 +23,7 @@ public class FenetreJeu extends JFrame{
         panel.setLayout(new BorderLayout());
         panel.setBackground(Color.GRAY);
 
-        plateauGraphique = new PlateauGraphique(this, plateau);
+        plateauGraphique = new PlateauGraphique(this, plateau,play);
         frame.addKeyListener(plateauGraphique);
         panel.add(plateauGraphique);
 

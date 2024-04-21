@@ -165,8 +165,12 @@ public class Player {
 
     }
 
-    public void Move(PlayerAction d) throws IOException
+    public void Move(PlayerAction d)
     {
-        channelPublish.basicPublish("", Nodename+"L", null, (ID+" "+d.name()).getBytes());
+        try {
+            channelPublish.basicPublish("", Nodename+"L", null, (ID+" "+d.name()).getBytes());
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }
