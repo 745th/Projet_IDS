@@ -19,6 +19,8 @@ public class Player {
 
     String ID;
     String OldID;
+    Plateau plat;
+    FenetreJeu jeu;
     Map<Integer,Point>Loc;
     String Nodename;
     Connection connection;
@@ -30,6 +32,14 @@ public class Player {
 
     public Player() throws IOException,TimeoutException
     {
+        plat = new Plateau(10, 10);
+        try {
+            jeu = new FenetreJeu(plat);
+            // FenetreGraphique mainFen = new FenetreGraphique(p);
+            jeu.setVisible(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         Loc = new Hashtable<>();
         Nodename="";
     }
@@ -144,8 +154,10 @@ public class Player {
             Loc.remove(ID);
         }
 
-
         //APPEL DE RAPH
+        Loc.forEach((K,v)->plat.plateau[v.x][v.y] = K);
+        jeu.plateauGraphique.repaint();
+
 
     }
 

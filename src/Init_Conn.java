@@ -30,7 +30,7 @@ public class Init_Conn {
     {
         UriList = new String[4];
         NodeSize=t_NodeSize;
-        MaxPlayer=0;
+        MaxPlayer=1;
         UriList[0]="NodeA";//"amqps://jldrpdok:8C9KJ8G4v3BKy_fA1xs10zw22AsAl_rr@rattlesnake.rmq.cloudamqp.com/jldrpdok";
         UriList[1]="NodeB";//"amqps://yfnszspt:sn1e2lYmrjqekmkGYR2WHsySWULUPvnB@rattlesnake.rmq.cloudamqp.com/yfnszspt"; //Instance
         UriList[2]="NodeC";//"amqps://vpagfpmc:wcQLsc6CD9DDUsDlz0WV9zuPRX6w8B_p@rattlesnake.rmq.cloudamqp.com/vpagfpmc";
