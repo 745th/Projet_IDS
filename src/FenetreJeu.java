@@ -1,24 +1,27 @@
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 
-public class FenetreJeu  extends JFrame{
+public class FenetreJeu extends JFrame{
 
     JFrame frame;
-
+    JPanel panel;
     PlateauGraphique plateauGraphique;
+    Player play;
 
-    Color cyan = new Color(0,200,255); 
-    Color rose = new Color(200,0,255); 
-    Color green = new Color(150,255,0); 
-    Color yellow = new Color(255,200,0); 
+    Color cyan = new Color(0,200,255);
+    Color green = new Color(150,255,0);
+    Color pink = new Color(200,0,255);
+    Color yellow = new Color(255,200,0);
 
-    public FenetreJeu(Plateau plateau) {
+    public FenetreJeu(Plateau plateau, Player play) {
+        this.play = play;
         frame = new JFrame("Jeu en cours");
         frame.setSize(new Dimension(600, 600));
 
-        JPanel panel = (JPanel) frame.getContentPane();
+        panel = (JPanel) frame.getContentPane();
         panel.setLayout(new BorderLayout());
-        panel.setBackground(new Color(200,0,255));
+        panel.setBackground(Color.GRAY);
 
         plateauGraphique = new PlateauGraphique(this, plateau);
         frame.addKeyListener(plateauGraphique);
@@ -28,4 +31,24 @@ public class FenetreJeu  extends JFrame{
         frame.setVisible(true);
     }
 
+    public void updateBackground() {
+        Color b_color;
+        switch (play.Nodename) {
+            case "NodeA":
+                b_color = cyan;
+                break;
+            case "NodeB":
+                b_color = green;
+                break;
+            case "NodeC":
+                b_color = pink;
+                break;
+            case "NodeD":
+                b_color = yellow;
+                break;
+            default:
+                b_color = Color.GRAY;
+        }
+        panel.setBackground(b_color);
+    }
 }

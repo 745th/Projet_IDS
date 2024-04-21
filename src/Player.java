@@ -34,7 +34,7 @@ public class Player {
     {
         plat = new Plateau(10, 10);
         try {
-            jeu = new FenetreJeu(plat);
+            jeu = new FenetreJeu(plat,this);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -125,6 +125,7 @@ public class Player {
             channelListen.basicConsume(ID, true, Handler);
         }
         Nodename=t_Nodename;
+        jeu.updateBackground();
 
         channelListen.exchangeDeclare(Nodename+"S", "fanout");
         //channelPublish.queueDeclare(Nodename+"L", false, false, false, null);
@@ -158,6 +159,7 @@ public class Player {
 
         //APPEL DE RAPH
         plat.joueur = Integer.parseInt(ID);
+        plat.clean();
         Loc.forEach((K,v)->plat.plateau[v.x][v.y] = K);
         jeu.plateauGraphique.repaint();
 

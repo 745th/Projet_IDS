@@ -1,3 +1,5 @@
+import java.awt.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Plateau {
@@ -28,6 +30,12 @@ public class Plateau {
 
     public int[][] grille() {
         return plateau;
+    }
+
+    public void clean(){
+        for (int i = 0; i < row; i++) {
+            Arrays.fill(plateau[i], 0);
+        }
     }
 
     public void afficher() {
