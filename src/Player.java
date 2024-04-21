@@ -34,7 +34,7 @@ public class Player {
     {
         plat = new Plateau(10, 10);
         try {
-            jeu = new FenetreJeu(plat);
+            jeu = new FenetreJeu(plat,this);
             // FenetreGraphique mainFen = new FenetreGraphique(p);
             jeu.setVisible(true);
         } catch (Exception e) {
@@ -128,7 +128,7 @@ public class Player {
         }
         Nodename=t_Nodename;
 
-        channelListen.exchangeDeclare(Nodename+"S", "fanout");
+        //channelListen.exchangeDeclare(Nodename+"S", "fanout");
         //channelPublish.queueDeclare(Nodename+"L", false, false, false, null);
         channelListen.queueBind(ID, Nodename+"S", "");
 
@@ -156,6 +156,7 @@ public class Player {
                     Loc.put(ID, loc);
                 }
             } else {
+                System.out.println("Player Disconnect");
                 Loc.remove(ID);
             }
         }
@@ -165,6 +166,19 @@ public class Player {
         jeu.plateauGraphique.repaint();
 
 
+    }
+
+    public void Disconnect()
+    {
+        try {
+            channelPublish.basicPublish("", Nodename + "L", null, (ID + " DISCONNECT").getBytes());
+            channelListen.queuePurge(ID);
+            channelListen.queueDelete(ID);
+
+        }catch(IOException e)
+        {
+            System.out.println(e);
+        }
     }
 
     public void Move(PlayerAction d) throws IOException

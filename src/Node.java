@@ -142,35 +142,33 @@ public class Node {
     public void ConnectPlayer(String message) throws IOException, TimeoutException
     {
         String[] output=message.split(" ");
-        if(MovePlayer(message))
-        {
-            System.out.println("New Player in coming");
-            if(output.length==5 && output[4].compareTo("Player")==0)
-            {
-
-            }
-            else
-            {
-                channelConnexionS.basicPublish("", "Initial_NL",null,(Nodename+" SUCCESS "+output[0]+" "+output[4]).getBytes());
-            }
-
-        }
-        else
-        {
-            System.out.println("Coord is occupy");
-            if(output.length==5 && output[4].compareTo("Player")==0)
-            {
-                String [] player_list=Players.keySet().toArray(new String[Players.size()]);
-                for (String i : player_list)
-                {
+        if(output[2].compareTo("Player") == 0) {
+            //send coord of all players to output[0]
+            String[] player_list = Players.keySet().toArray(new String[Players.size()]);
+                for (String i : player_list) {
                     channelPublish.basicPublish(Nodename + "S", output[0], null, (output[0] + " " + Integer.toString(Players.get(i).x) + " " + Integer.toString(Players.get(i).y)).getBytes());
                 }
-            }
-            else
-            {
-                channelConnexionS.basicPublish("", "Initial_NL",null, (Nodename+" "+output[0]+" "+output[4]).getBytes());
-            }
 
+        }
+        else {
+            if (MovePlayer(message)) {
+                //InitConn succed to get a valid coord
+                System.out.println("New Player in coming");
+                if (output.length == 5)
+                    channelConnexionS.basicPublish("", "Initial_NL", null, (Nodename + " SUCCESS " + output[0] + " " + output[4]).getBytes());
+                //else it's a player trying to move
+            } else {
+
+                System.out.println("Coord is occupy");
+                if (output.length == 5) {
+                    //InitConn send coord being occupied
+                    //alert InitConn
+                    channelConnexionS.basicPublish("", "Initial_NL", null, (Nodename + " " + output[0] + " " + output[4]).getBytes());
+
+                }
+                //else it's a player trying to move
+
+            }
         }
 
     }
@@ -179,6 +177,7 @@ public class Node {
     {
         System.out.println("Disconnect a player");
         String[] output=message.split(" ");
+        System.out.println(message);
         int x=Players.get(output[0]).x;
         int y=Players.get(output[0]).y;
         Players.remove(output[0]);
